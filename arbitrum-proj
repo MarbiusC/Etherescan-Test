@@ -1,0 +1,62 @@
+import requests
+import json
+import pandas as pd
+from datetime import datetime, timedelta
+import time
+
+contract_address = "0xa3A7B6F88361F48403514059F1F16C8E78d60EeC" # Arbitrum Contract address 
+api_key = "YA3DIE4BCUURV9P5HJ45N79TVTC6H8H6H7" # Etherscan API
+
+# Specify the start and end block numbers
+start_block = 16430000  # Replace with the block number of 1 week ago
+end_block = 16436762  # Replace with the current block number
+
+# Specify the GMX contract address
+gmx_contract_address = "0x4d4bff5f5b5c5e5f5b5c5e5f5b5c5e5f5b5c5e5f"
+
+# Send GET request to Etherscan API
+url = f"https://api.etherscan.io/api?module=account&action=txlist&address={contract_address}&startblock={start_block}&endblock={end_block}"
+headers = {'Authorization': 'Bearer ' + api_key}
+
+response = requests.get(url, headers=headers)
+
+# Check if the request was successful
+if response.status_code != 200:
+    print(f'Error: {response.status_code}')
+    print(response.json())
+else:
+    # Parse the JSON response
+    try:
+        data = response.json()['result']
+    except json.decoder.JSONDecodeError as e:
+        print(f'Error: {e}')
+    else:
+        # Convert the data to a Pandas DataFrame
+        df = pd.DataFrame(data)
+
+        # Filter the data for transactions that use GMX
+        gmx_transactions = df[df['input'].str.contains(gmx_contract_address, na=False)]
+
+        # Write the data to JSON files
+        with open('all_transactions.json', 'w') as f:
+            json.dump(df.to_dict(), f)
+        with open('gmx_transactions.json', 'w') as f:
+            json.dump(gmx_transactions.to_dict(), f)
+        print('Data saved to all_transactions.json and gmx_transactions.json')
+    time.sleep(5)  # Add a delay of 5 seconds between requests
+
+
+# The script starts by importing the required libraries and defining the contract address, GMX contract address and the Etherscan API key.
+# Then it specifies the start and end block numbers, which are used to filter the data for the last week of transactions.
+
+# Then it sends a GET request to the Etherscan API to retrieve the transaction data for the specified contract address and block range.
+# It checks if the request was successful and if so, it parses the JSON response and converts it to a pandas DataFrame.
+
+# Next, it uses the pd.DataFrame.str.contains() method to filter the data for transactions that use GMX.
+# The filtered data is saved to a JSON file called gmx_transactions.json and the data for all transactions is saved to a JSON file called all_transactions.json.
+
+# Finally, it adds a delay of 5 seconds between requests to avoid hitting the rate limit.
+
+# This script will retrieve the data for last week of transaction data, filter it to see the percentage of transactions that use GMX, 
+# and save it to two separate JSON files, allowing you to easily query and analyze the data using SQL or other tools.
+
